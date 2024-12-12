@@ -7,18 +7,25 @@ import logging
 # Set up logging to track errors and debug information
 logging.basicConfig(filename='error_log.log', level=logging.ERROR,
                     format='%(asctime)s - %(levelname)s - %(message)s')
+import sys
+import time
 
 def fetch_html(url):
-    """
-    Fetch HTML content from a URL.
-    """
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # Raise an error for bad status codes (e.g., 404, 500)
-        return response.content
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Failed to fetch URL {url}: {e}")
-        return None
+    max_retries = 5
+    retries = 0
+    retry_delay=5
+    while retries < max_retries:
+        try:
+            response = requests.get(url)
+            response.raise_for_status()  # Raise an HTTPError for bad responses
+            return response.content  # Return content if successful
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching URL {url}: {e}. Retrying in {retry_delay} seconds...")
+            retries += 1
+            time.sleep(retry_delay)  # Wait before retrying
+
+    print(f"Failed to fetch URL {url} after {max_retries} attempts. Exiting.")
+    sys.exit(1)
 
 def extract_by_xpath(doc, xpath):
     """
@@ -82,7 +89,7 @@ def main():
         with open(input_file, mode='r', encoding='utf-8') as file:
             reader = csv.reader(file)
             for row_number, row in enumerate(reader, start=1):
-                if row_number == 1:
+                if row_number < 803:
                     continue
 
                 if len(row) < 5:

@@ -2,18 +2,25 @@ from datetime import datetime
 import requests
 from lxml import html
 import csv
+import sys
+import time
 
 def fetch_html(url):
-    """
-    Fetch HTML content from a URL.
-    """
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # Raise an HTTPError for bad responses
-        return response.content
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching URL {url}: {e}")
-        return None
+    max_retries = 5
+    retries = 0
+    retry_delay=5
+    while retries < max_retries:
+        try:
+            response = requests.get(url)
+            response.raise_for_status()  # Raise an HTTPError for bad responses
+            return response.content  # Return content if successful
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching URL {url}: {e}. Retrying in {retry_delay} seconds...")
+            retries += 1
+            time.sleep(retry_delay)  # Wait before retrying
+
+    print(f"Failed to fetch URL {url} after {max_retries} attempts. Exiting.")
+    sys.exit(1)
 
 def extract_by_xpath(doc, xpath):
     """
